@@ -5,8 +5,7 @@ var del         = require('del'),
     gulp        = require('gulp'),
     yargs       = require('yargs'),
     browserSync = require('browser-sync'),
-    loadplugins = require('gulp-load-plugins'),
-    plugins     = loadplugins();
+    plugins     = require('gulp-load-plugins')();
 
 // Args
 
@@ -146,6 +145,7 @@ gulp.task('watch', [ 'serve' ], function() {
     gulp.watch('src/js/**/*.{js,coffee}',       [ 'js',     ]);
     gulp.watch('src/sass/**/*.{css,scss,sass}', [ 'sass',   ]);
     gulp.watch('src/pug/**/*.pug',              [ 'pug',    ]);
+    gulp.watch('src/markdown/**/*.md',          [ 'pug',    ]);
     gulp.watch('src/assets/**/*',               [ 'assets', ]);
 });
 
@@ -154,40 +154,24 @@ gulp.task('default', [ 'build', 'watch' ]);
 // pug Mixins
 
 pug.filters.syntax = function (string) {
-    return '<pre class="syntax-block">' + syntax(string) + '</pre>';
+    var syntax = require('./src/pug/_filters/syntax');
+
+    return syntax(string);
 };
 
-function syntax (string) {
-    'use strict';
+pug.filters.markdown = function (string) {
+    var markdown = require('./src/pug/_filters/markdown');
 
-    var tabs;
-
-    string = string
-        .replace(/^(\r?\n)*/, '')
-        .replace(/(\r?\n)*$/, '');
-
-    tabs   = /^(\s*)/.exec(string)[0];
-    string = string.replace(new RegExp('^' + tabs, 'gm'), '');
-    string = string.trim();
-
-    string = string
-        .replace(/"(.*?)"/g,                     '{string}"$1"{/string}')
-        .replace(/'(.*?)'/g,                     "{string}'$1'{/string}")
-        .replace(/:(\s*)(\w*)([;\n])/g,          ":$1{string}$2{/string}$3")
-        .replace(/\/\/ (.*)/g,                   "{comment}// $1{/comment}")
-        .replace(/(\/\*(.*)\*\/)/g,              '{comment}$1{/comment}')
-        .replace(/(<!--(.*)-->)/g,               '{comment}$1{/comment}');
-
-    string = string
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\{string\}/g,                 '<span class="syntax-string">')
-        .replace(/\{\/string\}/g,               '</span>')
-        .replace(/\{comment\}/g,                '<span class="syntax-comment">')
-        .replace(/\{\/comment\}/g,              '</span>');
-
-    return string;
-}
+    return markdown(string, {
+        gfm: true,
+        tables: true,
+        breaks: false,
+        pedantic: false,
+        sanitize: true,
+        smartLists: true,
+        smartypants: false
+    });
+};
 
 // npm i -D browser-sync
 // npm i -D pug
@@ -202,3 +186,4 @@ function syntax (string) {
 // npm i -D gulp-sourcemaps
 // npm i -D gulp-uglify
 // npm i -D gulp-bump
+// npm i -D gulp-marked
